@@ -6,13 +6,16 @@ const INITIAL_STATE = {
   email: '',
   body: '',
   subject: '',
+  status: 'IDLE',
 }
 
 const reducer = (state, action) => {
   switch (action.type) {
     case 'updateFieldValue':
       return { ...state, [action.field]: action.value }
-
+    case 'updateStatus':
+      return { ...state, status: action.status }
+    case 'reset':
     default:
       return INITIAL_STATE
   }
@@ -20,6 +23,7 @@ const reducer = (state, action) => {
 
 const Form = () => {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
+  const setStatus = (status) => dispatch({ type: 'updateStatus', status })
 
   const updateFieldValue = (field) => (event) => {
     dispatch({
@@ -31,52 +35,91 @@ const Form = () => {
 
   const handleSubmit = (event) => {
     event.preventDefault()
+    setStatus('PENDING')
 
-    console.log(state)
+    fetch('/api/contact', {
+      method: 'POST',
+      body: JSON.stringify(state),
+    })
+      .then((response) => response.json())
+      .then((response) => {
+        console.log(response)
+        setStatus('SUCCESS')
+      })
+      .catch((error) => {
+        console.error(error)
+        setStatus('ERROR')
+      })
+    // console.log(state)
+    // setTimeout(() => setStatus('SUCCESS'), 1000)
+  }
+  if (state.status === 'SUCCESS') {
+    return (
+      <p className={styles.success}>
+        Message sent!
+        <button
+          type="reset"
+          onClick={() => dispatch({ type: 'reset' })}
+          className={`${styles.button} ${styles.centered}`}
+        >
+          Reset
+        </button>
+      </p>
+    )
   }
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
-      <label className={styles.label}>
-        Name
-        <input
-          type="text"
-          className={styles.input}
-          name="name"
-          value={state.name}
-          onChange={updateFieldValue('name')}
-        />
-      </label>
-      <label className={styles.label}>
-        Email
-        <input
-          type="email"
-          className={styles.input}
-          name="email"
-          value={state.email}
-          onChange={updateFieldValue('email')}
-        />
-      </label>
-      <label className={styles.label}>
-        Subject
-        <input
-          type="text"
-          className={styles.input}
-          name="subject"
-          value={state.subject}
-          onChange={updateFieldValue('subject')}
-        />
-      </label>
-      <label className={styles.label}>
-        Body
-        <textarea
-          className={styles.textarea}
-          name="body"
-          value={state.body}
-          onChange={updateFieldValue('body')}
-        />
-      </label>
-      <button className={styles.button}>Send</button>
-    </form>
+    <>
+      {state.status === 'ERROR' && (
+        <p className={styles.error}>Something went wrong. Please try again</p>
+      )}
+      <form
+        className={`${styles.form} ${
+          state.status === 'PENDING' && styles.pending
+        }`}
+        onSubmit={handleSubmit}
+      >
+        <label className={styles.label}>
+          Name
+          <input
+            type="text"
+            className={styles.input}
+            name="name"
+            value={state.name}
+            onChange={updateFieldValue('name')}
+          />
+        </label>
+        <label className={styles.label}>
+          Email
+          <input
+            type="email"
+            className={styles.input}
+            name="email"
+            value={state.email}
+            onChange={updateFieldValue('email')}
+          />
+        </label>
+        <label className={styles.label}>
+          Subject
+          <input
+            type="text"
+            className={styles.input}
+            name="subject"
+            value={state.subject}
+            onChange={updateFieldValue('subject')}
+          />
+        </label>
+        <label className={styles.label}>
+          Body
+          <textarea
+            className={styles.textarea}
+            name="body"
+            value={state.body}
+            onChange={updateFieldValue('body')}
+          />
+        </label>
+        <button className={styles.button}>Send</button>
+      </form>
+    </>
   )
 }
 
