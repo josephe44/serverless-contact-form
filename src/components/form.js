@@ -50,9 +50,6 @@ const Form = () => {
         console.error(error)
         setStatus('ERROR')
       })
-    // console.log(state)
-    // setTimeout(() => setStatus('SUCCESS'), 1000)
-  }
   if (state.status === 'SUCCESS') {
     return (
       <p className={styles.success}>
